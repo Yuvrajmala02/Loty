@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Hourly Analytics Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  </head>
+  <body>
+    <h1>Hourly Analytics Dashboard</h1>
+
+    <div id="kpiContainer"></div>
+    <div id="trendChart"></div>
+    <div id="ctrChart"></div>
+    <div id="distributionChart"></div>
+    <ul id="insightsList"></ul>
+
+    <script>
+      const hoursDisplay = [
+        "00:00",
+        "01:00",
+        "02:00",
+        "03:00",
+        "04:00",
+        "05:00",
+        "06:00",
+        "07:00",
+        "08:00",
+        "09:00",
+        "10:00",
+        "11:00",
+        "12:00",
+        "13:00",
+        "14:00",
+        "15:00",
+        "16:00",
+        "17:00",
+        "18:00",
+        "19:00",
+        "20:00",
+        "21:00",
+        "22:00",
+        "23:00",
+      ];
+
+      const clicks = [
+        103, 24, 13, 18, 7, 55, 212, 483, 796, 1082, 1273, 1370, 1511, 1312,
+        1136, 1088, 1135, 1187, 1137, 1144, 1100, 956, 598, 265,
+      ];
+      const impressions = [
+        3539, 1523, 771, 505, 583, 1979, 9346, 21571, 36065, 49468, 58034,
+        58883, 56999, 51205, 44286, 40529, 42961, 45641, 48094, 48507, 47352,
+        38248, 23231, 9835,
+      ];
+
+      const ctr = clicks.map((c, i) => (c / impressions[i]) * 100);
+
+      const totalClicks = clicks.reduce((a, b) => a + b, 0);
+      const totalImpressions = impressions.reduce((a, b) => a + b, 0);
+      const avgCTR = ((totalClicks / totalImpressions) * 100).toFixed(2);
+
+      const maxClicks = Math.max(...clicks);
+      const peakHourClicks = hoursDisplay[clicks.indexOf(maxClicks)];
+      const maxCTR = Math.max(...ctr);
+      const bestCTRHour = hoursDisplay[ctr.indexOf(maxCTR)];
+
+      document.getElementById("kpiContainer").innerHTML = `
+<p>Total Clicks: ${totalClicks}</p>
+<p>Total Impressions: ${totalImpressions}</p>
+<p>Average CTR: ${avgCTR}%</p>
+`;
+
+      Plotly.newPlot("trendChart", [
+        {
+          x: hoursDisplay,
+          y: impressions,
+          type: "scatter",
+          name: "Impressions",
+        },
+        { x: hoursDisplay, y: clicks, type: "scatter", name: "Clicks" },
+      ]);
+
+      Plotly.newPlot("ctrChart", [
+        {
+          x: hoursDisplay,
+          y: ctr,
+          type: "bar",
+        },
+      ]);
+
+      Plotly.newPlot(
+        "distributionChart",
+        [
+          { x: hoursDisplay, y: impressions, type: "bar", name: "Impressions" },
+          { x: hoursDisplay, y: clicks, type: "bar", name: "Clicks" },
+        ],
+        { barmode: "group" },
+      );
+
+      const insights = [
+        `Peak clicks at ${peakHourClicks}`,
+        `Best CTR at ${bestCTRHour}`,
+        `Business hours dominate traffic`,
+        `Overnight traffic is minimal`,
+      ];
+
+      document.getElementById("insightsList").innerHTML = insights
+        .map((i) => `<li>${i}</li>`)
+        .join("");
+    </script>
+  </body>
+</html>
