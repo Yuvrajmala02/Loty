@@ -1,111 +1,373 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hourly Analytics Dashboard</title>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-  </head>
-  <body>
-    <h1>Hourly Analytics Dashboard</h1>
-
-    <div id="kpiContainer"></div>
-    <div id="trendChart"></div>
-    <div id="ctrChart"></div>
-    <div id="distributionChart"></div>
-    <ul id="insightsList"></ul>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            color: white;
+            padding: 30px 40px;
+            border-bottom: 4px solid #667eea;
+        }
+        .header h1 { font-size: 32px; margin-bottom: 10px; font-weight: 700; }
+        .header p { font-size: 16px; opacity: 0.9; margin-bottom: 20px; }
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .kpi-card {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .kpi-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+        .kpi-value { font-size: 28px; font-weight: 700; margin-bottom: 5px; }
+        .kpi-subtext { font-size: 13px; opacity: 0.7; }
+        .content { padding: 30px 40px; }
+        .chart-section { margin-bottom: 40px; }
+        .chart-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        .chart-description {
+            font-size: 14px;
+            color: #718096;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        .insight-box {
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .insight-box h3 {
+            color: #2d3748;
+            font-size: 16px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .insight-box ul {
+            list-style-position: inside;
+            color: #4a5568;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        .insight-box li { margin-bottom: 8px; }
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .footer {
+            background: #f7fafc;
+            padding: 20px 40px;
+            text-align: center;
+            color: #718096;
+            font-size: 14px;
+            border-top: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Hourly Analytics Dashboard</h1>
+            <p>Clicks & Impressions Performance Analysis | Feb 11, 2026</p>
+            <div class="kpi-container" id="kpiContainer"></div>
+        </div>
+        
+        <div class="content">
+            <div class="chart-section">
+                <h2 class="chart-title">📈 Hourly Trend Analysis</h2>
+                <p class="chart-description">
+                    Dual-axis visualization showing the correlation between impressions and clicks throughout the day.
+                </p>
+                <div class="chart-container">
+                    <div id="trendChart"></div>
+                </div>
+            </div>
+            
+            <div class="chart-section">
+                <h2 class="chart-title">🎯 Click-Through Rate (CTR) by Hour</h2>
+                <p class="chart-description">
+                    CTR percentage showing conversion efficiency - higher CTR indicates better engagement.
+                </p>
+                <div class="chart-container">
+                    <div id="ctrChart"></div>
+                </div>
+            </div>
+            
+            <div class="chart-section">
+                <h2 class="chart-title">📊 Distribution Analysis</h2>
+                <p class="chart-description">
+                    Comparative view of clicks and impressions distribution across the day.
+                </p>
+                <div class="chart-container">
+                    <div id="distributionChart"></div>
+                </div>
+            </div>
+            
+            <div class="insight-box">
+                <h3>💡 Key Insights & Strategic Recommendations</h3>
+                <ul id="insightsList"></ul>
+            </div>
+        </div>
+        
+        <div class="footer">
+            Generated by Senior Analytics Manager | Data-Driven Decision Making
+        </div>
+    </div>
 
     <script>
-      const hoursDisplay = [
-        "00:00",
-        "01:00",
-        "02:00",
-        "03:00",
-        "04:00",
-        "05:00",
-        "06:00",
-        "07:00",
-        "08:00",
-        "09:00",
-        "10:00",
-        "11:00",
-        "12:00",
-        "13:00",
-        "14:00",
-        "15:00",
-        "16:00",
-        "17:00",
-        "18:00",
-        "19:00",
-        "20:00",
-        "21:00",
-        "22:00",
-        "23:00",
-      ];
-
-      const clicks = [
-        103, 24, 13, 18, 7, 55, 212, 483, 796, 1082, 1273, 1370, 1511, 1312,
-        1136, 1088, 1135, 1187, 1137, 1144, 1100, 956, 598, 265,
-      ];
-      const impressions = [
-        3539, 1523, 771, 505, 583, 1979, 9346, 21571, 36065, 49468, 58034,
-        58883, 56999, 51205, 44286, 40529, 42961, 45641, 48094, 48507, 47352,
-        38248, 23231, 9835,
-      ];
-
-      const ctr = clicks.map((c, i) => (c / impressions[i]) * 100);
-
-      const totalClicks = clicks.reduce((a, b) => a + b, 0);
-      const totalImpressions = impressions.reduce((a, b) => a + b, 0);
-      const avgCTR = ((totalClicks / totalImpressions) * 100).toFixed(2);
-
-      const maxClicks = Math.max(...clicks);
-      const peakHourClicks = hoursDisplay[clicks.indexOf(maxClicks)];
-      const maxCTR = Math.max(...ctr);
-      const bestCTRHour = hoursDisplay[ctr.indexOf(maxCTR)];
-
-      document.getElementById("kpiContainer").innerHTML = `
-<p>Total Clicks: ${totalClicks}</p>
-<p>Total Impressions: ${totalImpressions}</p>
-<p>Average CTR: ${avgCTR}%</p>
-`;
-
-      Plotly.newPlot("trendChart", [
-        {
-          x: hoursDisplay,
-          y: impressions,
-          type: "scatter",
-          name: "Impressions",
-        },
-        { x: hoursDisplay, y: clicks, type: "scatter", name: "Clicks" },
-      ]);
-
-      Plotly.newPlot("ctrChart", [
-        {
-          x: hoursDisplay,
-          y: ctr,
-          type: "bar",
-        },
-      ]);
-
-      Plotly.newPlot(
-        "distributionChart",
-        [
-          { x: hoursDisplay, y: impressions, type: "bar", name: "Impressions" },
-          { x: hoursDisplay, y: clicks, type: "bar", name: "Clicks" },
-        ],
-        { barmode: "group" },
-      );
-
-      const insights = [
-        `Peak clicks at ${peakHourClicks}`,
-        `Best CTR at ${bestCTRHour}`,
-        `Business hours dominate traffic`,
-        `Overnight traffic is minimal`,
-      ];
-
-      document.getElementById("insightsList").innerHTML = insights
-        .map((i) => `<li>${i}</li>`)
-        .join("");
+        // DATA - From latest CSV file
+        const hoursDisplay = ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"];
+        
+        const impressions = [12841, 6436, 2897, 1964, 2050, 4416, 17140, 37221, 55635, 80797, 96161, 85162, 78094, 70375, 65935, 59698, 66841, 86264, 86531, 76249, 72855, 63412, 45581, 23404];
+        
+        const clicks = [25, 13, 11, 3, 5, 5, 16, 32, 42, 81, 115, 78, 88, 84, 55, 61, 74, 67, 101, 100, 77, 66, 62, 26];
+        
+        console.log('Data loaded - Clicks:', clicks);
+        console.log('Data loaded - Impressions:', impressions);
+        
+        // Calculate CTR
+        const ctr = clicks.map((c, i) => (c / impressions[i] * 100));
+        
+        // Calculate KPIs
+        const totalClicks = clicks.reduce((a, b) => a + b, 0);
+        const totalImpressions = impressions.reduce((a, b) => a + b, 0);
+        const avgCTR = (totalClicks / totalImpressions * 100).toFixed(3);
+        const maxClicks = Math.max(...clicks);
+        const maxImpressions = Math.max(...impressions);
+        const peakHourClicks = hoursDisplay[clicks.indexOf(maxClicks)];
+        const peakHourImpressions = hoursDisplay[impressions.indexOf(maxImpressions)];
+        const maxCTR = Math.max(...ctr).toFixed(3);
+        const bestCTRHour = hoursDisplay[ctr.indexOf(Math.max(...ctr))];
+        
+        // Display KPIs
+        document.getElementById('kpiContainer').innerHTML = `
+            <div class="kpi-card">
+                <div class="kpi-label">Total Clicks</div>
+                <div class="kpi-value">${totalClicks.toLocaleString()}</div>
+                <div class="kpi-subtext">Peak: ${peakHourClicks}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Total Impressions</div>
+                <div class="kpi-value">${totalImpressions.toLocaleString()}</div>
+                <div class="kpi-subtext">Peak: ${peakHourImpressions}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Average CTR</div>
+                <div class="kpi-value">${avgCTR}%</div>
+                <div class="kpi-subtext">Best: ${bestCTRHour} (${maxCTR}%)</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Peak Click Rate</div>
+                <div class="kpi-value">${maxClicks.toLocaleString()}</div>
+                <div class="kpi-subtext">At ${peakHourClicks}</div>
+            </div>
+        `;
+        
+        // Chart 1: Trend Chart
+        Plotly.newPlot('trendChart', [
+            {
+                x: hoursDisplay,
+                y: impressions,
+                name: 'Impressions',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#667eea', width: 3 },
+                marker: { size: 8 },
+                fill: 'tozeroy',
+                fillcolor: 'rgba(102, 126, 234, 0.1)',
+                yaxis: 'y1',
+                hovertemplate: '<b>%{x}</b><br>Impressions: %{y:,}<extra></extra>'
+            },
+            {
+                x: hoursDisplay,
+                y: clicks,
+                name: 'Clicks',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#f56565', width: 3 },
+                marker: { size: 8 },
+                fill: 'tozeroy',
+                fillcolor: 'rgba(245, 101, 101, 0.1)',
+                yaxis: 'y2',
+                hovertemplate: '<b>%{x}</b><br>Clicks: %{y:,}<extra></extra>'
+            }
+        ], {
+            title: {
+                text: 'Hourly Performance Overview - Dual Axis View',
+                font: { size: 18, color: '#2d3748' }
+            },
+            xaxis: { 
+                title: 'Hour of Day', 
+                tickangle: -45,
+                gridcolor: '#e2e8f0'
+            },
+            yaxis: { 
+                title: 'Impressions', 
+                titlefont: { color: '#667eea' },
+                tickfont: { color: '#667eea' },
+                gridcolor: '#e2e8f0'
+            },
+            yaxis2: { 
+                title: 'Clicks', 
+                titlefont: { color: '#f56565' },
+                tickfont: { color: '#f56565' },
+                overlaying: 'y', 
+                side: 'right' 
+            },
+            height: 500,
+            hovermode: 'x unified',
+            showlegend: true,
+            legend: { x: 0.5, y: 1.15, xanchor: 'center', orientation: 'h' },
+            plot_bgcolor: '#ffffff',
+            paper_bgcolor: '#ffffff'
+        }, {responsive: true});
+        
+        // Chart 2: CTR Chart
+        const ctrColors = ctr.map(val => {
+            if (val > 0.12) return '#48bb78';
+            if (val > 0.10) return '#ecc94b';
+            return '#f56565';
+        });
+        
+        Plotly.newPlot('ctrChart', [{
+            x: hoursDisplay,
+            y: ctr,
+            type: 'bar',
+            marker: {
+                color: ctrColors,
+                line: { color: '#2d3748', width: 1 }
+            },
+            text: ctr.map(v => v.toFixed(3) + '%'),
+            textposition: 'outside',
+            textfont: { size: 9 },
+            hovertemplate: '<b>%{x}</b><br>CTR: %{y:.3f}%<extra></extra>'
+        }], {
+            title: {
+                text: 'Click-Through Rate by Hour (Green=High, Yellow=Medium, Red=Low)',
+                font: { size: 18, color: '#2d3748' }
+            },
+            xaxis: { 
+                title: 'Hour of Day', 
+                tickangle: -45,
+                gridcolor: '#e2e8f0'
+            },
+            yaxis: { 
+                title: 'CTR (%)',
+                gridcolor: '#e2e8f0'
+            },
+            height: 450,
+            plot_bgcolor: '#ffffff',
+            paper_bgcolor: '#ffffff'
+        }, {responsive: true});
+        
+        // Chart 3: Distribution
+        Plotly.newPlot('distributionChart', [
+            {
+                x: hoursDisplay,
+                y: impressions,
+                name: 'Impressions',
+                type: 'bar',
+                marker: { color: '#667eea', opacity: 0.8 },
+                hovertemplate: '<b>%{x}</b><br>Impressions: %{y:,}<extra></extra>'
+            },
+            {
+                x: hoursDisplay,
+                y: clicks,
+                name: 'Clicks',
+                type: 'bar',
+                marker: { color: '#f56565', opacity: 0.8 },
+                yaxis: 'y2',
+                hovertemplate: '<b>%{x}</b><br>Clicks: %{y:,}<extra></extra>'
+            }
+        ], {
+            title: {
+                text: 'Hourly Distribution - Volume Comparison',
+                font: { size: 18, color: '#2d3748' }
+            },
+            xaxis: { 
+                title: 'Hour of Day', 
+                tickangle: -45,
+                gridcolor: '#e2e8f0'
+            },
+            yaxis: { 
+                title: 'Impressions', 
+                titlefont: { color: '#667eea' },
+                tickfont: { color: '#667eea' },
+                gridcolor: '#e2e8f0'
+            },
+            yaxis2: { 
+                title: 'Clicks', 
+                titlefont: { color: '#f56565' },
+                tickfont: { color: '#f56565' },
+                overlaying: 'y', 
+                side: 'right' 
+            },
+            barmode: 'group',
+            height: 450,
+            showlegend: true,
+            legend: { x: 0.5, y: 1.15, xanchor: 'center', orientation: 'h' },
+            plot_bgcolor: '#ffffff',
+            paper_bgcolor: '#ffffff'
+        }, {responsive: true});
+        
+        // Insights
+        const businessHoursClicks = clicks.slice(9, 18).reduce((a,b)=>a+b,0);
+        const eveningClicks = clicks.slice(18, 24).reduce((a,b)=>a+b,0);
+        const eveningImpressions = impressions.slice(18, 24).reduce((a,b)=>a+b,0);
+        const eveningCTR = (eveningClicks / eveningImpressions * 100).toFixed(3);
+        const morningGrowth = ((clicks[8]-clicks[6])/clicks[6]*100).toFixed(0);
+        const overnightClicks = clicks.slice(0,5).reduce((a,b)=>a+b,0);
+        
+        const insights = [
+            `<strong>🏆 Peak Performance:</strong> Highest clicks (${maxClicks}) at ${peakHourClicks}, representing ${((maxClicks/totalClicks)*100).toFixed(1)}% of daily clicks. This is your power hour!`,
+            `<strong>📈 Business Hours (09:00-17:00):</strong> Captured ${businessHoursClicks.toLocaleString()} clicks (${((businessHoursClicks/totalClicks)*100).toFixed(1)}% of total). Core revenue window with consistent performance.`,
+            `<strong>🌟 Evening Excellence:</strong> Evening hours (18:00-23:00) show ${eveningCTR}% CTR - ${((eveningCTR/avgCTR-1)*100).toFixed(1)}% above average! Strong engagement period worth scaling.`,
+            `<strong>⚡ Best CTR:</strong> ${maxCTR}% at ${bestCTRHour} indicates peak conversion efficiency. Surprisingly high overnight performance!`,
+            `<strong>📊 Morning Ramp-Up:</strong> ${morningGrowth > 0 ? '+' : ''}${morningGrowth}% growth from 06:00 to 08:00 (${clicks[6]} → ${clicks[8]} clicks). Strong morning momentum.`,
+            `<strong>💰 Cost Optimization:</strong> Overnight period (00:00-04:00) generates only ${((overnightClicks/totalClicks)*100).toFixed(1)}% of clicks but shows high CTR. Consider targeted low-bid strategy.`,
+            `<strong>🎯 Top 3 Hours by Volume:</strong> 10:00 (${clicks[10]} clicks), 18:00 (${clicks[18]} clicks), 19:00 (${clicks[19]} clicks). Focus budget here for maximum volume.`,
+            `<strong>📌 Key Recommendation:</strong> Increase budget 25-30% during evening hours (18:00-22:00) where CTR is ${((eveningCTR/avgCTR-1)*100).toFixed(1)}% above average for optimal ROI.`
+        ];
+        
+        document.getElementById('insightsList').innerHTML = insights.map(i => `<li>${i}</li>`).join('');
     </script>
-  </body>
+</body>
 </html>
